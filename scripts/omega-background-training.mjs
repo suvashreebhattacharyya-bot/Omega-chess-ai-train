@@ -23,6 +23,17 @@ try {
 
   const arena = page.locator(".omega-arena");
   await arena.waitFor({ state: "visible", timeout: 120_000 });
+
+  // A fresh browser session displays OMEGA's Play & Learn disclosure.
+  // The user explicitly configured this workflow for shared training, so
+  // accept the visible disclosure before interacting with the arena.
+  const consent = page.locator(".omega-entry-accept");
+  if (await consent.isVisible().catch(() => false)) {
+    console.log("[OMEGA] Accepting the Play & Learn disclosure for this training session.");
+    await consent.click();
+    await page.locator(".omega-entry-backdrop").waitFor({ state: "hidden", timeout: 30_000 });
+  }
+
   await page.getByText(/Connected to the single shared OMEGA cloud/).first().waitFor({ timeout: 120_000 });
 
   const start = arena.getByRole("button", { name: "Start / Resume" });
