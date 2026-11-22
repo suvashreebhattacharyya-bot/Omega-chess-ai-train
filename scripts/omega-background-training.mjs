@@ -23,7 +23,7 @@ try {
 
   const arena = page.locator(".omega-arena");
   await arena.waitFor({ state: "visible", timeout: 120_000 });
-  await page.getByText(/Connected to the single shared OMEGA cloud/).waitFor({ timeout: 120_000 });
+  await page.getByText(/Connected to the single shared OMEGA cloud/).first().waitFor({ timeout: 120_000 });
 
   const start = arena.getByRole("button", { name: "Start / Resume" });
   const pause = arena.getByRole("button", { name: "Pause after game" });
