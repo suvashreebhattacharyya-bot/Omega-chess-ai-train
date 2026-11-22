@@ -34,4 +34,9 @@ Never overwrite a production model while experimenting. Review every report and 
 OMEGA classic + PVS recorded 526/1,000 exact top-1 matches (52.6%) at depth 3 against Stockfish 19 Lite, without giving OMEGA the teacher's best move. A 20% NNUE/classical blend scored 51.2% on the same sample and was rejected. A later candidate scored 47/100 and was also rejected. These are research results, not a claim about the deployed website or a 90% achievement.
 
 ## Reproducibility checklist
-Record dataset SHA-256, model SHA-256, seed, hyperparameters, split, exact benchmark command, node budget and raw results. Compare candidates on the same held-out positions.
+Record dataset SHA-256, model SHA-256, seed, hyperparameters, split, exact benchmark command, node budget and raw results.
+
+## Cloud background arena training
+The `.github/workflows/omega-background-training.yml` workflow opens the deployed OMEGA website in a headless browser and starts or resumes the Stockfish training arena. It runs in bounded sessions and resumes from the single central Supabase match counter. The workflow is only a scheduler/controller: the engine, training logic and authoritative learning memory remain in the OMEGA website and central cloud. It does not copy or maintain a second engine implementation.
+
+This scheduled arena process updates adaptive move-ordering memory. It does **not** retrain neural-network weights, and its results must not be described as an NNUE training run. The workflow uses anonymous access already enabled for OMEGA; no service-role key or additional user account is required. Disable the workflow in the GitHub Actions tab to stop scheduled sessions.
