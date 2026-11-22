@@ -4,6 +4,7 @@ const SITE = process.env.OMEGA_SITE_URL || "https://omega-chess-ai.higgsfield.ap
 const MAX_SESSION_MS = 345 * 60 * 1000;
 const POLL_MS = 60_000;
 
+async function main() {
 const browser = await chromium.launch({
   headless: true,
   args: ["--no-sandbox", "--disable-dev-shm-usage"],
@@ -72,3 +73,10 @@ try {
 } finally {
   await browser.close();
 }
+
+}
+
+main().catch((error) => {
+  console.error("[OMEGA] Background training controller failed:", error);
+  process.exitCode = 1;
+});
