@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/omega-background-training.mjs"
+      - ".github/workflows/omega-background-training.yml"
 
 permissions:
   contents: read
@@ -22,6 +27,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
