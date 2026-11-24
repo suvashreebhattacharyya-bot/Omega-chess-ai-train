@@ -52,6 +52,29 @@ async function captureRecoveryScreenshot(page, recoveryNumber) {
   }
 }
 
+async function waitForLeaseAndResume(ui, page, deadline) {
+  const waitUntil = Math.min(deadline - 60_000, Date.now() + LEASE_WAIT_MS);
+  while (Date.now() < waitUntil) {
+    const status = await ui.status.innerText().catch(() => "status unavailable");
+    const progress = await ui.progress.innerText().catch(() => "");
+    if (progress.includes("10,000/10,000") || status.includes("Training complete")) return true;
+    if (await ui.pause.isVisible().catch(() => false)) return true;
+    if (await ui.start.isEnabled().catch(() => false)) {
+      console.warn("[OMEGA] Shared lease is available; starting from the centrally saved match count.");
+      await ui.start.click();
+      try {
+        await ui.pause.waitFor({ state: "visible", timeout: 120_000 });
+        return true;
+      } catch (error) {
+        console.warn("[OMEGA] Resume is still waiting for the UI/lease:", error instanceof Error ? error.message : String(error));
+      }
+    }
+    await page.waitForTimeout(RECOVERY_WAIT_MS);
+  }
+  console.warn("[OMEGA] Shared lease is still unavailable after the recovery wait; the watchdog will keep monitoring and retry.");
+  return false;
+}
+
 async function main() {
   const browser = await chromium.launch({
     headless: true,
@@ -109,6 +132,8 @@ async function main() {
         // expires automatically if the page cannot release it cleanly.
         try {
           ui = await waitForArena(page, false);
+          const resumed = await waitForLeaseAndResume(ui, page, deadline);
+          if (resumed) started = true;
         } catch (error) {
           console.error("[OMEGA] Page reload did not restore the arena:", error instanceof Error ? error.stack || error.message : String(error));
           await page.waitForTimeout(RECOVERY_WAIT_MS);
@@ -151,6 +176,8 @@ async function main() {
         await captureRecoveryScreenshot(page, recoveries);
         try {
           ui = await waitForArena(page, false);
+          const resumed = await waitForLeaseAndResume(ui, page, deadline);
+          if (resumed) started = true;
           lastSignal = "";
           lastActivityAt = Date.now();
         } catch (error) {
