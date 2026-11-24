@@ -13,11 +13,18 @@ const RECOVERY_DIR = "omega-training-recovery";
 
 async function acceptDisclosure(page) {
   const consent = page.locator(".omega-entry-accept");
-  if (await consent.isVisible().catch(() => false)) {
-    console.log("[OMEGA] Accepting the Play & Learn disclosure for this training session.");
+  const backdrop = page.locator(".omega-entry-backdrop");
+  for (let attempt = 1; attempt <= 8; attempt += 1) {
+    if (!(await consent.isVisible().catch(() => false))) return;
+    console.log(`[OMEGA] Accepting the Play & Learn disclosure (attempt ${attempt}/8).`);
+    // The page can render before React hydration finishes. A first click may
+    // reach the DOM before its handler is attached, so verify the modal really
+    // closed and retry instead of failing the whole scheduled training run.
     await consent.click();
-    await page.locator(".omega-entry-backdrop").waitFor({ state: "hidden", timeout: 30_000 });
+    await page.waitForTimeout(1_500);
+    if (!(await backdrop.isVisible().catch(() => false))) return;
   }
+  throw new Error("The Play & Learn disclosure stayed open after 8 verified click attempts.");
 }
 
 async function waitForArena(page, navigate = false) {
